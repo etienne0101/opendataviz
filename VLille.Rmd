@@ -1,0 +1,55 @@
+---
+title: "VLille"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Packages et librairies
+install.packages("tidyverse")
+library(dbplyr)
+install.packages("rjson")
+library(rjson)
+install.packages("jsonlite")
+install.packages("plyr")
+library(plyr)
+install.packages("RJSONIO")
+library(RJSONIO)
+
+```
+
+## R Markdown
+
+Text
+
+```{r vlille}
+
+rt_data <- read.csv("https://opendata.lillemetropole.fr/explore/dataset/vlille-realtime/download/?format=csv&refine.nom=CANTELEU&timezone=Europe/Paris&lang=fr&use_labels_for_header=true&csv_separator=%3B")
+
+canRT <- jsonlite::fromJSON("https://opendata.lillemetropole.fr/api/records/1.0/search/?dataset=vlille-realtime&q=&rows=10&facet=libelle&facet=nom&facet=commune&facet=etat&facet=etatconnexion&facet=nbplacesdispo&facet=nbvelosdispo&refine.nom=CANTELEU")
+
+canRT
+
+canRTrecord <- jsonlite::fromJSON("https://opendata.lillemetropole.fr/api/records/1.0/search/?dataset=vlille-realtime&q=&rows=10&facet=libelle&facet=nom&facet=commune&facet=etat&facet=etatconnexion&facet=nbplacesdispo&facet=nbvelosdispo&refine.nom=CANTELEU")
+
+
+db_canteleu <- fromJSON(file = "vlillecanteleu.json")
+
+db_canteleu
+
+
+
+  
+ 
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
