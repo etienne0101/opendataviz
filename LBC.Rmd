@@ -54,7 +54,7 @@ nb_biens_commune_clear_mut <- nb_biens_commune_clear %>%
 
 nb_biens_commune_clear_mut
 
-write.table(nb_biens_commune_clear_mut, "prixm2_lille_20km_16022021.csv")
+write.csv(nb_biens_commune_clear_mut, "prixm2_lille_20km_16022021.csv")
 
 #Transfo en integer
 
@@ -87,11 +87,20 @@ prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
   geom_col()
   
 
-prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
-  aes(x = nom.commune, y = reorder(desc(prix_m2)), fill = prix_m2) +
+prixm2_com
+
+#reorder graph
+
+data_ordered <- read_csv(file = "prixm2_lille_20km_16022021.csv")
+
+head(data_ordered)
+
+prixm2_com2 <- ggplot(data = data_ordered)+
+  aes(x = reorder(nom.commune, - prix_m2), y = prix_m2, fill = prix_m2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   geom_col()
 
-prixm2_com
+prixm2_com2
 
 
 ```
