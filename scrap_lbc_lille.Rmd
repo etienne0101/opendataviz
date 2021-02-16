@@ -1,37 +1,23 @@
 ---
-title: "LBC"
-output:
-  html_document: default
-  pdf_document: default
+title: "scrap_lbc_lille"
+output: html_document
 ---
 
-##Packages
-
-```{r setup}
-knitr::opts_chunk$set(warning = TRUE, message = TRUE)
-include=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
 library(tidyverse)
-library(ggplot2)
-install.packages("hexbin")
-install.packages("hablar")
-library(hablar)
-install.packages("wesanderson")
-library(wesanderson)
-install.packages("janitor")
-library(janitor)
+
 ```
 
 ## R Markdown
 
-Text
 
-```{r lbc}
+```{r}
 
 #Load data
 
 lille_20_m_16022021 <- read.csv(file = "lille_20km_maisons_16022021.csv")
-
-lille_20_m_16022021 
 
 #Calcul par commune
 
@@ -48,7 +34,6 @@ nb_biens_commune <- lille_20_m_16022021 %>%
 nb_biens_commune_clear <- nb_biens_commune %>%
   filter(nombre >19)
   
-nb_biens_commune_clear  
 
 #Rename des colonnes et sélection
 
@@ -58,14 +43,9 @@ nb_biens_commune_clear_mut <- nb_biens_commune_clear %>%
   select(nom.commune, prix_m2, nombre, surface) %>%
   arrange(desc(prix_m2))
 
-nb_biens_commune_clear_mut
 
 write.csv(nb_biens_commune_clear_mut, "prixm2_lille_20km_16022021.csv")
 
-#Transfo en integer
-
-class(nb_biens_commune_clear_mut$prix_m2)
-  
 
 ##Graphique prix 
 
@@ -139,5 +119,5 @@ prixm2locnord <- ggplot(data = nordloccom)+
   ylab("prix moyen au mètre carré")
 
 prixm2locnord
- 
+
 ```
