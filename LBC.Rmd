@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggplot2)
 install.packages("hexbin")
+install.packages("hablar")
+library(hablar)
 
 ```
 
@@ -47,9 +49,16 @@ nb_biens_commune_clear
 nb_biens_commune_clear_mut <- nb_biens_commune_clear %>%
   mutate(prix_m2 = `mean(prix_m2)`,
          surface = `mean(surface_all)`) %>%
-  select(nom.commune, prix_m2, nombre, surface)
+  select(nom.commune, prix_m2, nombre, surface) %>%
+  arrange(desc(prix_m2))
 
 nb_biens_commune_clear_mut
+
+write.table(nb_biens_commune_clear_mut, "prixm2_lille_20km_16022021.csv")
+
+#Transfo en integer
+
+class(nb_biens_commune_clear_mut$prix_m2)
   
 
 ##Graphique prix 
@@ -72,7 +81,17 @@ smooth1
 
 #Par commune
 
-prixm2_com <- ggplot(data = nb_biens_commune_clear)+
-  aes(x= nom.commune)
+prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
+  aes(x = nom.commune, y = prix_m2, fill = prix_m2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_col()
+  
+
+prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
+  aes(x = nom.commune, y = reorder(desc(prix_m2)), fill = prix_m2) +
+  geom_col()
+
+prixm2_com
+
 
 ```
