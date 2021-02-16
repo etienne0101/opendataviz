@@ -68,7 +68,7 @@ smooth1 <- ggplot(data = lille_20_m_16022021) +
   aes(x = surface_all, y = prix)+
   geom_smooth()
 
-smooth1
+smooth1 
 
 #Par commune
 
