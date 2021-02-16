@@ -12,6 +12,9 @@ library(ggplot2)
 install.packages("hexbin")
 install.packages("hablar")
 library(hablar)
+install.packages("wesanderson")
+library(wesanderson)
+
 
 ```
 
@@ -98,7 +101,9 @@ head(data_ordered)
 prixm2_com2 <- ggplot(data = data_ordered)+
   aes(x = reorder(nom.commune, - prix_m2), y = prix_m2, fill = prix_m2) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_col()
+  geom_col()+
+  xlab("commune")+
+  ylab("prix moyen au mètre carré")
 
 prixm2_com2
 
