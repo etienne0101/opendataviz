@@ -3,26 +3,76 @@ title: "LBC"
 output: html_document
 ---
 
+##Packages
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+install.packages("hexbin")
+
 ```
 
 ## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Text
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r lbc}
 
-```{r cars}
-summary(cars)
+#Load data
+
+lille_20_m_16022021 <- read.csv(file = "lille_20km_maisons_16022021.csv")
+
+lille_20_m_16022021
+
+#Calcul par commune
+
+nb_biens_commune <- lille_20_m_16022021 %>%
+  group_by(nom.commune) %>%
+  summarise(mean(prix_m2),
+            mean(surface_all),
+            mean(prix),
+            nombre = n()) %>%
+  ungroup()
+
+#Filtre commmunes + de 20 annonces
+
+nb_biens_commune_clear <- nb_biens_commune %>%
+  filter(nombre >19)
+  
+nb_biens_commune_clear  
+
+#Rename des colonnes et sélection
+
+nb_biens_commune_clear_mut <- nb_biens_commune_clear %>%
+  mutate(prix_m2 = `mean(prix_m2)`,
+         surface = `mean(surface_all)`) %>%
+  select(nom.commune, prix_m2, nombre, surface)
+
+nb_biens_commune_clear_mut
+  
+
+##Graphique prix 
+
+#Nuage de points (raw)
+
+np1 <- ggplot(data = lille_20_m_16022021) +
+  aes(x = surface_all, y = prix) +
+  scale_x_continuous(trans = 'log2') +
+  scale_y_continuous(trans = 'log2')+
+  geom_point() 
+
+#Smooth (raw)
+
+smooth1 <- ggplot(data = lille_20_m_16022021) +
+  aes(x = surface_all, y = prix)+
+  geom_smooth()
+
+smooth1
+
+#Par commune
+
+prixm2_com <- ggplot(data = nb_biens_commune_clear)+
+  aes(x= nom.commune)
+
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
