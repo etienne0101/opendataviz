@@ -1,0 +1,158 @@
+---
+title: "Script réplicable - scrap LeBonCoin"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+#Installation des Packages
+
+install.packages("dplyr")
+install.packages("questionr")
+install.packages("cartography")
+install.packages("lwgeom")
+install.packages("SpatialPosition")
+install.packages("leaflet")
+install.packages("maps")
+install.packages("sp")
+install.packages("geojsonio")
+install.packages("AddPolygons")
+install.packages("rgdal")
+
+
+#Chargement des librairies
+
+library(tidyverse)
+library(dplyr)
+library(questionr)
+library(cartography)
+library(sf)
+library(lwgeom)
+library(SpatialPosition)
+library(leaflet)
+library(maps)
+library(sp)
+library(geojsonio)
+library(rgdal)
+
+```
+
+<h2>Opérations préalables : </h2>
+
+<b>Scrapping</b>
+
+<li>Scraper les données sur LeBonCoin, à partir d'une recherche</li>
+<li>Collecter la liste des annonce dans un CSV avec pour colonnes (a minima) : <mark>titre_annonce ; prix_location ; commune ; date_publication</mark></li>
+
+Outil employé : webscraper.io
+
+<p>
+
+<b>Nettoyage</b>
+
+Outil employé : Workbench
+
+<mark>Penser à supprimer les espaces superflux dans le champ "communes", suite au scrapping</mark>
+
+Fichier en "sortie", avant l'import dans RStudio :
+<li>titre_annonce</li>
+<li>prix</li>
+<li>commune</li>
+<li>date</li>
+<li>code_postal</li>
+<li>surface</li>
+<li>nombre_pieces</li>
+<li>type (appartement ou maison)</li>
+<li>prix_m2</li>
+
+<p>
+
+```{r}
+
+#Charger les données scrapées
+
+rawdata <- read.csv(file = "nord_locations_16022021.csv") 
+
+#Préparer les données pour une vue par commune
+
+data_commune <- rawdata %>% 
+  group_by(commune) %>%
+  dplyr::summarise(mean(prix_m2),
+            mean(surface_all),
+            mean(prix),
+            nombre = n()) %>%
+  ungroup() %>%
+  filter(nombre>10) %>%
+  filter(commune != "") %>%
+  mutate(prix_m2 = `mean(prix_m2)`,
+         surface = `mean(surface_all)`,
+         nom_com = commune)
+
+
+#Visualiser les prix par commune
+
+viz_prixm2 <- ggplot(data = data_commune)+
+  aes(x = reorder(commune, - prix_m2), y = prix_m2, fill = prix_m2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_col()+
+  xlab("commune")+
+  ylab("prix moyen au mètre carré")
+
+viz_prixm2
+
+
+
+#Jointure Géographique
+#Attention aux espaces invisibles dans les données scrapées avant de faire la jointure sur une variable
+
+#DONT RUN
+write.csv(data_commune, "datacommune01.csv")
+#Supression des espaces dans Workbench car je ne sais pas encore le faire dans R
+data_commune <- read_csv(file = "datacommunegeo02.csv")
+
+
+##Chargement du shapefile des contours des communes
+
+communes_nord_shp <- st_read("contours-geographiques-simplifies-des-communes-2019/")
+
+plot(st_geometry(communes_nord_shp))
+
+##Jointure
+
+communes_nord_merge <- merge(x = communes_nord_shp, y = data_commune, by = "nom_com")
+
+
+#Dataviz cartographique
+
+##Palettes de couleurs et séquencage en classes
+
+pal <- colorBin(
+  palette = "viridis",
+  domain = communes_nord_merge$prix_m2,
+  reverse = TRUE,
+   bins = quantile(
+    communes_nord_merge$prix_m2,
+    probs = seq(0, 1, by = 0.2)))
+
+##Création de la dataviz
+
+map_prix_commune <- leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(
+  data = communes_nord_merge, 
+  popup = ~paste0("Prix au mètre carré : ", round(prix_m2, 2), " €"),
+  fill = TRUE,
+  fillColor = ~pal(prix_m2),
+  fillOpacity = 0.8,
+  weight = 1,
+  color = "white",
+    label = ~nom_com)
+
+map_prix_commune
+
+```
+

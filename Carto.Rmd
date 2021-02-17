@@ -1,0 +1,59 @@
+---
+title: "Carto_lbc"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Install Packages
+install.packages("tmap")
+install.packages("riskyr")
+
+#Libraries
+library(tmap)
+library(sf)
+library(leaflet)
+library(plyr)
+library(dplyr)
+library(riskyr)
+
+```
+
+## R Markdown
+
+
+
+```{r}
+
+#Palettes couleurs
+
+pal <- colorBin(
+  palette = "viridis",
+  domain = mergecom$prix_m2,
+  reverse = TRUE,
+   bins = quantile(
+    mergecom$prix_m2,
+    probs = seq(0, 1, by = 0.2)))
+
+#Viz
+
+map_loccom <- leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(
+  data = mergecom, 
+  popup = ~paste0("Prix au mètre carré : ", round(prix_m2, 2), " €"),
+  fill = TRUE,
+  fillColor = ~pal(prix_m2),
+  fillOpacity = 0.8,
+  weight = 1,
+  color = "white",
+    label = ~nom_com)
+  
+  
+  
+
+map_loccom
+
+```
+
