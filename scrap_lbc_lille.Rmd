@@ -4,9 +4,36 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(eval = FALSE, include = FALSE)
+r = getOption("repos")
+r["CRAN"] = "http://cran.us.r-project.org"
+options(repos = r)
+
+##Install Packages
+
+install.packages("dplyr")
 library(dplyr)
 library(tidyverse)
+install.packages("questionr")
+library(questionr)
+install.packages("cartography")
+library(cartography)
+library(sf)
+install.packages("lwgeom")
+library(lwgeom)
+install.packages("SpatialPosition")
+library(SpatialPosition)
+install.packages("leaflet")
+library(leaflet)
+install.packages("maps")
+library(maps)
+install.packages("sp")
+library(sp)
+install.packages("geojsonio")
+library(geojsonio)
+install.packages("AddPolygons")
+install.packages("rgdal")
+library(rgdal)
 
 ```
 
@@ -15,11 +42,13 @@ library(tidyverse)
 
 ```{r}
 
-#Load data
+#Ventes (décomposition des étapes, à optimiser).
+
+##Chargement des données
 
 lille_20_m_16022021 <- read.csv(file = "lille_20km_maisons_16022021.csv")
 
-#Calcul par commune
+##Groupement par commune
 
 nb_biens_commune <- lille_20_m_16022021 %>%
   group_by(nom.commune) %>%
@@ -29,13 +58,13 @@ nb_biens_commune <- lille_20_m_16022021 %>%
             nombre = n()) %>%
   ungroup()
 
-#Filtre commmunes + de 20 annonces
+##Filtre des commmunes avec plus de 20 annonces
 
 nb_biens_commune_clear <- nb_biens_commune %>%
   filter(nombre >19)
   
 
-#Rename des colonnes et sélection
+##Rename des colonnes et sélection
 
 nb_biens_commune_clear_mut <- nb_biens_commune_clear %>%
   mutate(prix_m2 = `mean(prix_m2)`,
@@ -49,7 +78,7 @@ write.csv(nb_biens_commune_clear_mut, "prixm2_lille_20km_16022021.csv")
 
 ##Graphique prix 
 
-#Nuage de points (raw)
+###Nuage de points (raw)
 
 np1 <- ggplot(data = lille_20_m_16022021) +
   aes(x = surface_all, y = prix) +
@@ -57,7 +86,7 @@ np1 <- ggplot(data = lille_20_m_16022021) +
   scale_y_continuous(trans = 'log2')+
   geom_point() 
 
-#Smooth (raw)
+###Smooth (raw)
 
 smooth1 <- ggplot(data = lille_20_m_16022021) +
   aes(x = surface_all, y = prix)+
@@ -65,7 +94,7 @@ smooth1 <- ggplot(data = lille_20_m_16022021) +
 
 smooth1 
 
-#Par commune
+###Par commune
 
 prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
   aes(x = nom.commune, y = prix_m2, fill = prix_m2) +
@@ -75,7 +104,7 @@ prixm2_com <- ggplot(data = nb_biens_commune_clear_mut)+
 
 prixm2_com
 
-#reorder graph
+###Reorder graph
 
 data_ordered <- read_csv(file = "prixm2_lille_20km_16022021.csv")
 
@@ -91,7 +120,9 @@ prixm2_com2 <- ggplot(data = data_ordered)+
 prixm2_com2
 
 
-##Locations
+#Locations
+
+##Chargement données
 
 nordloc <- read.csv(file = "nord_locations_16022021.csv")
 
@@ -109,7 +140,7 @@ nordloccom <- nordloc %>%
 
 nordloccom
 
-## Visualisation locations
+##Visualisation locations par communes
 
 prixm2locnord <- ggplot(data = nordloccom)+
   aes(x = reorder(commune, - prix_m2), y = prix_m2, fill = prix_m2) +
@@ -120,4 +151,53 @@ prixm2locnord <- ggplot(data = nordloccom)+
 
 prixm2locnord
 
+
+##Jointure géo
+
+###chargement geom
+
+contours_com_nord <- read.csv2(file = "contours_communes_nord.csv")
+
+contours_com_nord <- contours_com_nord %>%
+  mutate(commune = Nom.de.la.commune) %>%
+  select(commune, Geo.Shape, population_totale, Nom.du.département)
+
+###traitements jointure
+####clean text dans workbench (remove spaces)
+
+locnordgeo <- read.csv(file = "locnord_geo.csv")
+
+locnordgeo_com <- locnordgeo %>% 
+  group_by(commune) %>%
+  summarise(mean(prix_m2),
+            mean(surface_all),
+            mean(prix),
+            nombre = n()) %>%
+  ungroup() %>%
+  filter(nombre>10) %>%
+  filter(commune != "") %>%
+  mutate(prix_m2 = `mean(prix_m2)`,
+         nom_com = commune,
+         surface = `mean(surface_all)`)
+
+locnordgeo_com <- locnordgeo_com %>%
+  inner_join(contours_com_nord, by ="commune")
+
+write.csv(locnordgeo_com, "locnordgeo_com.csv")
+
+###Dataviz carto
+
+nordshp <- st_read("contours-geographiques-simplifies-des-communes-2019/")
+
+plot(st_geometry(nordshp))
+
+###Merge SHP avec data
+
+mergecom <- merge(x = nordshp, y = locnordgeo_com, by = "nom_com")
+
+###Tests
+
+test6 <- choroLayer(x = mergecom, var = "prix_m2")
+  
+  
 ```
